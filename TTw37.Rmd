@@ -1,0 +1,80 @@
+---
+title: "TidyTuesday Friends"
+output: html_document
+---
+TidyTuesday Friends 2020-09-08 |
+[Description](https://github.com/rfordatascience/tidytuesday/blob/master/data/2020/2020-09-08/readme.md) |
+Contributor: Sabina Rako, Twitter: @ra_sabina]
+
+```{r setup, include=FALSE}
+library(tidytuesdayR)
+library(tidyverse)
+library(skimr)
+library(ggplot2)
+library(forcats)
+library(ggthemes)
+library(lubridate)
+library(mdthemes)
+library(patchwork)
+```
+
+## Loading data
+
+```{r cars}
+tuesdata <- tidytuesdayR::tt_load('2020-09-08')
+friends <- tuesdata$friends
+friends_emotions <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-08/friends_emotions.csv')
+friends_info <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-09-08/friends_info.csv')
+
+
+skim(friends)
+skim(friends_emotions)
+skim(friends_info)
+
+friends_info$air_date <- lubridate::ymd(friends_info$air_date)
+
+
+episodesmonth <- table(lubridate::month(friends_info$air_date, label = TRUE)) %>% 
+  as.data.frame() %>% 
+  dplyr::rename(Month = Var1)
+
+
+p1 <- ggplot(episodesmonth, aes(Month, Freq)) +
+  geom_segment( aes(x = Month, xend = Month, y = 0, yend = Freq)) +
+  geom_point(size = 9) + scale_y_continuous(breaks = seq(0, 40, 10), limits=c(-1,45)) +  
+  mdthemes::md_theme_fivethirtyeight() + 
+  theme(panel.grid.major.x = element_blank()) + 
+  labs(title = "Number of <span style=color:#ff4747>**Friends**</span> episodes per month") + ylab("Number of episodes")
+    
+
+p1 <- p1 + annotate(geom = "text", x  =episodesmonth$Month, y = episodesmonth$Freq, label = episodesmonth$Freq, size = 4, color = "white", fontface = "bold") + annotate(geom = "text", x = episodesmonth$Month[episodesmonth$Freq== max(episodesmonth$Freq)], y = max(episodesmonth$Freq), label = max(episodesmonth$Freq), size = 4, color = "#ff4747", fontface = "bold") + annotate("text", label = "Friends episodes were mostly \naired during October", x = "Jul", y = 37) + geom_curve(x ="Aug", y = 40, xend = "Oct", yend = 40,  curvature = -.5, arrow = arrow(length = unit(2, "mm")))
+
+
+ratingsmonth <-  friends_info %>% mutate( month = lubridate::month(air_date, label = TRUE)) %>% 
+  select(month, imdb_rating)  %>% 
+  add_row(month = "Jun", imdb_rating = NULL) %>% 
+  add_row(month = "Jul", imdb_rating = NULL) %>% 
+  add_row(month = "Aug", imdb_rating = NULL) 
+
+month_levels <- c(
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+months <- factor(ratingsmonth$month, levels = month_levels)
+
+p2 <- ggplot(ratingsmonth, aes(x=sort(months), y=imdb_rating)) + 
+  geom_violin(trim = FALSE, fill = "#ff4747") + 
+  scale_y_continuous(breaks = seq(6.5, 10.5, 1), limits=c(6,11)) +  
+  mdthemes::md_theme_fivethirtyeight() + 
+  theme(panel.grid.major.x = element_blank()) + 
+  labs(title = "<span style=color:#ff4747>**Friends**</span> IMDB ratings per month") + 
+  xlab("Month") + 
+  ylab("IMDB rating")
+
+p2 <- p2  + annotate("text", label = "Some episodes during \nDecember are rated higher", x = "Jul", y = 10.5) + geom_curve(x ="Sep", y = 10.5, xend = "Dec", yend = 9.7,  curvature = -.5, arrow = arrow(length = unit(2, "mm")))
+
+p1 + p2 + labs(caption = "Data source: ceros interactive article & Emil Hvitfeldt Vis: @ra_sabina")
+
+ggsave("PlotTTw37.png", dpi = 300, height = 15, width = 35, units = "cm")
+```
+
