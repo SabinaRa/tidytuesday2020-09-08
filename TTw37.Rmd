@@ -96,7 +96,7 @@ p2 <- ggplot(ratingsmonth, aes(factor(month, levels = month_levels), y=imdb_rati
 
 p2 <- p2  + 
   annotate("text",
-    label = "The episode 'The One with Ross's Sandwich' was rated \nhigher then the other episodes aired during December", 
+    label = "'The One with Ross's Sandwich' episode was rated \nhigher then the other episodes aired during December", 
     x = "Jul", y = 10.6) + 
   geom_curve(x ="Nov", 
     y = 10.5, 
